@@ -32,7 +32,7 @@ export const getMeals = async (page = 1, limit = 10, day?: string) => {
   if (day) {
     const capitalizedDay =
       day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
-    url += `&availableDay=${capitalizedDay}`;
+    url += `&day=${capitalizedDay}`;
   }
   const response = await api.get(url);
   console.log("[v0] API response for getMeals:", response.data);
@@ -106,6 +106,14 @@ export const deleteLocation = async (locationId: string) => {
   const response = await api.delete(`/admin/locations/${locationId}`);
   return response.data;
 };
+
+export const updateLocationStatus = async (locationId: string, isActive: boolean) => {
+  const response = await api.put(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/admin/locations/${locationId}`,
+    { isActive }
+  )
+  return response.data
+}
 
 // Users API
 export const getUsers = async (page = 1, limit = 10) => {

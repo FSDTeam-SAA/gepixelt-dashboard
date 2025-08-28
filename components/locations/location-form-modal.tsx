@@ -1,143 +1,194 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createLocation, updateLocation } from "@/lib/api"
-import { toast } from "sonner"
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  createLocation,
+  updateLocation,
+  updateLocationStatus,
+} from "@/lib/api";
+import { toast } from "sonner";
 
 interface LocationFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  location?: any
+  isOpen: boolean;
+  onClose: () => void;
+  location?: any;
 }
 
-export function LocationFormModal({ isOpen, onClose, location }: LocationFormModalProps) {
+export function LocationFormModal({
+  isOpen,
+  onClose,
+  location,
+}: LocationFormModalProps) {
   const [formData, setFormData] = useState({
-    streetAddress: location?.streetAddress || "",
-    city: location?.city || "",
-    state: location?.state || "",
-    zipCode: location?.zipCode || "",
-  })
+    name: "",
+    address: "",
+  });
 
-  const queryClient = useQueryClient()
+  // ✅ Load location data into form when editing
+  useEffect(() => {
+    if (location) {
+      setFormData({
+        name: location.name || "",
+        address: location.address || "",
+      });
+    } else {
+      resetForm();
+    }
+  }, [location, isOpen]);
 
+  const queryClient = useQueryClient();
+
+  // ✅ Create mutation
   const createMutation = useMutation({
     mutationFn: createLocation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations"] })
-      toast.success("Location created successfully")
-      onClose()
-      resetForm()
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
+      toast.success("Location created successfully");
+      onClose();
+      resetForm();
     },
     onError: () => {
-      toast.error("Failed to create location")
+      toast.error("Failed to create location");
     },
-  })
+  });
 
+  // ✅ Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => updateLocation(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateLocation(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations"] })
-      toast.success("Location updated successfully")
-      onClose()
-      resetForm()
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
+      toast.success("Location updated successfully");
+      onClose();
+      resetForm();
     },
     onError: () => {
-      toast.error("Failed to update location")
+      toast.error("Failed to update location");
     },
-  })
+  });
+
+  // ✅ Update status mutation
+  const statusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      updateLocationStatus(id, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
+      toast.success("Location status updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update location status");
+    },
+  });
 
   const resetForm = () => {
     setFormData({
-      streetAddress: "",
-      city: "",
-      state: "",
-      zipCode: "",
-    })
-  }
+      name: "",
+      address: "",
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (location) {
-      updateMutation.mutate({ id: location._id, data: formData })
+      updateMutation.mutate({ id: location._id, data: formData });
     } else {
-      createMutation.mutate(formData)
+      createMutation.mutate(formData);
     }
-  }
+  };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isStatusLoading = statusMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{location ? "Edit Location" : "Add Location"}</DialogTitle>
+          <DialogTitle>
+            {location ? "Edit Location" : "Add Location"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="streetAddress">Street Address</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
-              id="streetAddress"
-              placeholder="123 Main Street"
-              value={formData.streetAddress}
-              onChange={(e) => setFormData((prev) => ({ ...prev, streetAddress: e.target.value }))}
+              id="name"
+              placeholder="Office Building A"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
               required
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                placeholder="San Francisco"
-                value={formData.city}
-                onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                placeholder="CA"
-                value={formData.state}
-                onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))}
-                required
-              />
-            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="zipCode">Zip Code</Label>
+            <Label htmlFor="address">Address</Label>
             <Input
-              id="zipCode"
-              placeholder="94105"
-              value={formData.zipCode}
-              onChange={(e) => setFormData((prev) => ({ ...prev, zipCode: e.target.value }))}
+              id="address"
+              placeholder="123 Main Street, Downtown"
+              value={formData.address}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, address: e.target.value }))
+              }
               required
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-red-500 hover:bg-red-600" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save"}
-            </Button>
+          <div className="flex justify-between items-center pt-4">
+            {/* ✅ Toggle status button only if editing */}
+            {location && (
+              <Button
+                type="button"
+                variant={location.isActive ? "destructive" : "default"}
+                onClick={() =>
+                  statusMutation.mutate({
+                    id: location._id,
+                    isActive: !location.isActive,
+                  })
+                }
+                disabled={isStatusLoading}
+              >
+                {isStatusLoading
+                  ? "Updating..."
+                  : location.isActive
+                  ? "Deactivate"
+                  : "Activate"}
+              </Button>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-red-500 hover:bg-red-600"
+                disabled={isLoading}
+              >
+                {isLoading ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

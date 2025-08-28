@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { PageHeader } from "@/components/layout/page-header"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getOrders, updateOrderStatus } from "@/lib/api"
-import { useState } from "react"
-import { toast } from "sonner"
-import Image from "next/image"
-import { Menu } from "lucide-react"
+import { AppLayout } from "@/components/layout/app-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getOrders, updateOrderStatus } from "@/lib/api";
+import { useState } from "react";
+import { toast } from "sonner";
+import Image from "next/image";
+import { Menu } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -18,46 +18,47 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
 
 export default function OrdersPage() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const queryClient = useQueryClient()
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ["orders", currentPage],
     queryFn: () => getOrders(currentPage, 10),
-  })
+  });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: string; status: string }) => updateOrderStatus(orderId, status),
+    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
+      updateOrderStatus(orderId, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] })
-      toast.success("Order status updated successfully")
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Order status updated successfully");
     },
     onError: () => {
-      toast.error("Failed to update order status")
+      toast.error("Failed to update order status");
     },
-  })
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "processing":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "completed":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
-    updateStatusMutation.mutate({ orderId, status: newStatus })
-  }
+    updateStatusMutation.mutate({ orderId, status: newStatus });
+  };
 
   if (isLoading) {
     return (
@@ -89,11 +90,11 @@ export default function OrdersPage() {
           </Card>
         </div>
       </AppLayout>
-    )
+    );
   }
 
-  const orders = ordersData?.orders || []
-  const pagination = ordersData?.pagination
+  const orders = ordersData?.orders || [];
+  const pagination = ordersData?.pagination;
 
   return (
     <AppLayout>
@@ -141,41 +142,60 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order: any) => (
+                  {orders?.map((order: any) => (
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.userId._id.slice(-4)}
+                        {order?.userId?._id.slice(-4)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.foodId._id.slice(-4)}
+                        {order?.foodId?._id.slice(-4)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Image
-                            src={order.foodId.mainImage || "/placeholder.svg?height=40&width=40&query=food"}
-                            alt={order.foodId.description}
+                            src={
+                              order?.foodId?.mainImage ||
+                              "/placeholder.svg?height=40&width=40&query=food"
+                            }
+                            alt={order?.foodId?.description}
                             width={40}
                             height={40}
                             className="rounded object-cover mr-3"
                           />
                           <span className="text-sm text-gray-900">
-                            {order.foodId.description.split(" ").slice(0, 2).join(" ")}
+                            {order?.foodId?.description
+                              .split(" ")
+                              .slice(0, 2)
+                              .join(" ")}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Meal-{order.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.totalPrice}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.location}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Meal-{order.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${order.totalPrice}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.location}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(order.orderDate).toLocaleDateString("en-GB")}
                         <br />
-                        {new Date(order.orderDate).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(order.orderDate).toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                          className={`px-2 py-1 rounded text-xs font-medium border-0 ${getStatusColor(order.status)}`}
+                          onChange={(e) =>
+                            handleStatusChange(order._id, e.target.value)
+                          }
+                          className={`px-2 py-1 rounded text-xs font-medium border-0 ${getStatusColor(
+                            order.status
+                          )}`}
                           disabled={updateStatusMutation.isPending}
                         >
                           <option value="pending">Pending</option>
@@ -195,18 +215,28 @@ export default function OrdersPage() {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
                     Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )}{" "}
+                    of {pagination.total} results
                   </div>
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={() =>
+                            setCurrentPage(Math.max(1, currentPage - 1))
+                          }
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
                       {[...Array(Math.min(8, pagination.pages))].map((_, i) => {
-                        const pageNum = i + 1
+                        const pageNum = i + 1;
                         return (
                           <PaginationItem key={i}>
                             <PaginationLink
@@ -217,7 +247,7 @@ export default function OrdersPage() {
                               {pageNum}
                             </PaginationLink>
                           </PaginationItem>
-                        )
+                        );
                       })}
                       {pagination.pages > 8 && (
                         <PaginationItem>
@@ -226,9 +256,15 @@ export default function OrdersPage() {
                       )}
                       <PaginationItem>
                         <PaginationNext
-                          onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
+                          onClick={() =>
+                            setCurrentPage(
+                              Math.min(pagination.pages, currentPage + 1)
+                            )
+                          }
                           className={
-                            currentPage === pagination.pages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                            currentPage === pagination.pages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
                           }
                         />
                       </PaginationItem>
@@ -241,5 +277,5 @@ export default function OrdersPage() {
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }

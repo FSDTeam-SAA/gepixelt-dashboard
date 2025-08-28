@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { PageHeader } from "@/components/layout/page-header"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getUsers, deleteUser } from "@/lib/api"
-import { useState } from "react"
-import { toast } from "sonner"
-import { Trash2 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AppLayout } from "@/components/layout/app-layout";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getUsers, deleteUser } from "@/lib/api";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Pagination,
   PaginationContent,
@@ -18,33 +18,33 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
 
 export default function UsersPage() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const queryClient = useQueryClient()
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data: usersData, isLoading } = useQuery({
     queryKey: ["users", currentPage],
     queryFn: () => getUsers(currentPage, 10),
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-      toast.success("User deleted successfully")
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("User deleted successfully");
     },
     onError: () => {
-      toast.error("Failed to delete user")
+      toast.error("Failed to delete user");
     },
-  })
+  });
 
   const handleDelete = (userId: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      deleteMutation.mutate(userId)
+      deleteMutation.mutate(userId);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -78,23 +78,17 @@ export default function UsersPage() {
           </Card>
         </div>
       </AppLayout>
-    )
+    );
   }
 
-  const users = usersData?.users || []
-  const pagination = usersData?.pagination
+  const users = usersData?.users || [];
+  const pagination = usersData?.pagination;
 
   return (
     <AppLayout>
       <PageHeader
         title="User Profile"
         breadcrumbs={["Dashboard", "User Profile"]}
-        action={
-          <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium">
-            Total User
-            <div className="text-lg font-bold">41,200.00</div>
-          </div>
-        }
       />
 
       <div className="p-6">
@@ -130,22 +124,34 @@ export default function UsersPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.map((user: any) => (
                     <tr key={user._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user._id.slice(-4)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user._id.slice(-4)}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Avatar className="h-8 w-8 mr-3">
                             <AvatarImage src="/professional-man.png" />
-                            <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+                            <AvatarFallback>
+                              {user.name?.charAt(0) || "U"}
+                            </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm text-gray-900">{user.name || "John Smith"}</span>
+                          <span className="text-sm text-gray-900">
+                            {user.name || "John Smith"}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.totalOrders || 200}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.totalOrders || 200}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.deliveredOrders || 170}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.pendingOrders || 20}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.pendingOrders || 20}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <Button
                           variant="ghost"
@@ -168,18 +174,28 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
                     Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total
+                    )}{" "}
+                    of {pagination.total} results
                   </div>
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={() =>
+                            setCurrentPage(Math.max(1, currentPage - 1))
+                          }
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
                         />
                       </PaginationItem>
                       {[...Array(Math.min(8, pagination.pages))].map((_, i) => {
-                        const pageNum = i + 1
+                        const pageNum = i + 1;
                         return (
                           <PaginationItem key={i}>
                             <PaginationLink
@@ -190,7 +206,7 @@ export default function UsersPage() {
                               {pageNum}
                             </PaginationLink>
                           </PaginationItem>
-                        )
+                        );
                       })}
                       {pagination.pages > 8 && (
                         <PaginationItem>
@@ -199,9 +215,15 @@ export default function UsersPage() {
                       )}
                       <PaginationItem>
                         <PaginationNext
-                          onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
+                          onClick={() =>
+                            setCurrentPage(
+                              Math.min(pagination.pages, currentPage + 1)
+                            )
+                          }
                           className={
-                            currentPage === pagination.pages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                            currentPage === pagination.pages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
                           }
                         />
                       </PaginationItem>
@@ -214,5 +236,5 @@ export default function UsersPage() {
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }

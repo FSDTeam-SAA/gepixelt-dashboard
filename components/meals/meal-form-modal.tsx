@@ -1,139 +1,180 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useRef } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createMeal, updateMeal } from "@/lib/api"
-import { toast } from "sonner"
-import { Upload, X, ImageIcon } from "lucide-react"
-import Image from "next/image"
+import type React from "react";
+import { useState, useRef, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createMeal, updateMeal } from "@/lib/api";
+import { toast } from "sonner";
+import { Upload, X, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 interface MealFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  meal?: any
-  day: string
+  isOpen: boolean;
+  onClose: () => void;
+  meal?: any;
+  day: string;
 }
 
-export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps) {
+export function MealFormModal({
+  isOpen,
+  onClose,
+  meal,
+  day,
+}: MealFormModalProps) {
   const [formData, setFormData] = useState({
     description: meal?.description || "",
     price: meal?.price || "",
     availableDay: meal?.availableDay || day,
-  })
-  const [mainImage, setMainImage] = useState<File | null>(null)
-  const [otherImages, setOtherImages] = useState<File[]>([])
-  const [mainImagePreview, setMainImagePreview] = useState<string>(meal?.mainImage || "")
-  const [otherImagePreviews, setOtherImagePreviews] = useState<string[]>(meal?.otherImages || [])
+  });
+  const [mainImage, setMainImage] = useState<File | null>(null);
+  const [otherImages, setOtherImages] = useState<File[]>([]);
+  const [mainImagePreview, setMainImagePreview] = useState<string>(
+    meal?.mainImage || ""
+  );
+  const [otherImagePreviews, setOtherImagePreviews] = useState<string[]>(
+    meal?.otherImages || []
+  );
 
-  const mainImageRef = useRef<HTMLInputElement>(null)
-  const otherImagesRef = useRef<HTMLInputElement>(null)
-  const queryClient = useQueryClient()
+  const mainImageRef = useRef<HTMLInputElement>(null);
+  const otherImagesRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  // Sync form data and image previews when meal prop changes
+  useEffect(() => {
+    if (meal) {
+      setFormData({
+        description: meal.description || "",
+        price: meal.price || "",
+        availableDay: meal.availableDay || day,
+      });
+      setMainImagePreview(meal.mainImage || "");
+      setOtherImagePreviews(meal.otherImages || []);
+      setMainImage(null);
+      setOtherImages([]);
+    } else {
+      resetForm();
+    }
+  }, [meal, day]);
 
   const createMutation = useMutation({
     mutationFn: createMeal,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meals", day] })
-      toast.success("Meal created successfully")
-      onClose()
-      resetForm()
+      queryClient.invalidateQueries({ queryKey: ["meals", day] });
+      toast.success("Meal created successfully");
+      onClose();
+      resetForm();
     },
     onError: () => {
-      toast.error("Failed to create meal")
+      toast.error("Failed to create meal");
     },
-  })
+  });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: FormData }) => updateMeal(id, data),
+    mutationFn: ({ id, data }: { id: string; data: FormData }) =>
+      updateMeal(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meals", day] })
-      toast.success("Meal updated successfully")
-      onClose()
-      resetForm()
+      queryClient.invalidateQueries({ queryKey: ["meals", day] });
+      toast.success("Meal updated successfully");
+      onClose();
+      resetForm();
     },
     onError: () => {
-      toast.error("Failed to update meal")
+      toast.error("Failed to update meal");
     },
-  })
+  });
 
   const resetForm = () => {
     setFormData({
       description: "",
       price: "",
       availableDay: day,
-    })
-    setMainImage(null)
-    setOtherImages([])
-    setMainImagePreview("")
-    setOtherImagePreviews([])
-  }
+    });
+    setMainImage(null);
+    setOtherImages([]);
+    setMainImagePreview("");
+    setOtherImagePreviews([]);
+    if (mainImageRef.current) mainImageRef.current.value = "";
+    if (otherImagesRef.current) otherImagesRef.current.value = "";
+  };
 
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      setMainImage(file)
-      const reader = new FileReader()
-      reader.onload = () => setMainImagePreview(reader.result as string)
-      reader.readAsDataURL(file)
+      setMainImage(file);
+      const reader = new FileReader();
+      reader.onload = () => setMainImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleOtherImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      setOtherImages((prev) => [...prev, ...files])
+      setOtherImages((prev) => [...prev, ...files]);
 
       files.forEach((file) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = () => {
-          setOtherImagePreviews((prev) => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
+          setOtherImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }
+  };
 
   const removeOtherImage = (index: number) => {
-    setOtherImages((prev) => prev.filter((_, i) => i !== index))
-    setOtherImagePreviews((prev) => prev.filter((_, i) => i !== index))
-  }
+    setOtherImages((prev) => prev.filter((_, i) => i !== index));
+    setOtherImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const data = new FormData()
-    data.append("description", formData.description)
-    data.append("price", formData.price)
-    data.append("availableDay", formData.availableDay)
+    const data = new FormData();
+    data.append("description", formData.description);
+    data.append("price", formData.price);
+    data.append("availableDay", formData.availableDay);
 
     if (mainImage) {
-      data.append("mainImage", mainImage)
+      data.append("mainImage", mainImage);
     }
 
     otherImages.forEach((image, index) => {
-      data.append("otherImages", image)
-    })
+      data.append("otherImages", image);
+    });
 
     if (meal) {
-      updateMutation.mutate({ id: meal._id, data })
+      updateMutation.mutate({ id: meal._id, data });
     } else {
-      createMutation.mutate(data)
+      createMutation.mutate(data);
     }
-  }
+  };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{meal ? `Edit ${day} Meal` : `Add ${day} Meal`}</DialogTitle>
+          <DialogTitle>
+            {meal ? `Edit ${day} Meal` : `Add ${day} Meal`}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -144,7 +185,12 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
               id="description"
               placeholder="Add your title"
               value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               required
             />
           </div>
@@ -159,7 +205,9 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
                 step="0.01"
                 placeholder="Add food price"
                 value={formData.price}
-                onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, price: e.target.value }))
+                }
                 required
               />
             </div>
@@ -169,7 +217,9 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
               <Label>Available Day</Label>
               <Select
                 value={formData.availableDay}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, availableDay: value }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, availableDay: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -197,6 +247,7 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
                     width={200}
                     height={150}
                     className="rounded-lg object-cover mx-auto"
+                    onError={() => setMainImagePreview("/placeholder.svg")}
                   />
                   <Button
                     type="button"
@@ -204,9 +255,9 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={() => {
-                      setMainImage(null)
-                      setMainImagePreview("")
-                      if (mainImageRef.current) mainImageRef.current.value = ""
+                      setMainImage(null);
+                      setMainImagePreview("");
+                      if (mainImageRef.current) mainImageRef.current.value = "";
                     }}
                   >
                     <X className="h-4 w-4" />
@@ -215,7 +266,11 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
               ) : (
                 <div className="text-center">
                   <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <Button type="button" variant="outline" onClick={() => mainImageRef.current?.click()}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => mainImageRef.current?.click()}
+                  >
                     <ImageIcon className="h-4 w-4 mr-2" />
                     Upload Image
                   </Button>
@@ -243,6 +298,13 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
                     width={80}
                     height={80}
                     className="rounded-lg object-cover w-full h-20"
+                    onError={() => {
+                      setOtherImagePreviews((prev) =>
+                        prev.map((p, i) =>
+                          i === index ? "/placeholder.svg" : p
+                        )
+                      );
+                    }}
                   />
                   <Button
                     type="button"
@@ -276,15 +338,24 @@ export function MealFormModal({ isOpen, onClose, meal, day }: MealFormModalProps
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-6">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="bg-red-500 hover:bg-red-600" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isLoading}
+            >
               {isLoading ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
