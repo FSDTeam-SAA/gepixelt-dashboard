@@ -28,8 +28,8 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>({
     defaultValues: {
-      email: "admin@catering.com",
-      password: "password123",
+      email: "",
+      password: "",
     },
   });
 

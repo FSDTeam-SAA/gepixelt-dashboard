@@ -14,6 +14,8 @@ export function DashboardStats() {
     queryFn: getDashboardStats,
   })
 
+  console.log(stats)
+
   const [revenueFilter, setRevenueFilter] = useState<"day" | "week" | "month">("day")
   const [userFilter, setUserFilter] = useState<"day" | "week" | "month">("month")
 

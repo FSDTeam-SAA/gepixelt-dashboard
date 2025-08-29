@@ -45,8 +45,6 @@ export default function OrdersPage() {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "processing":
-        return "bg-blue-100 text-blue-800";
       case "completed":
         return "bg-green-100 text-green-800";
       case "cancelled":
@@ -63,15 +61,7 @@ export default function OrdersPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <PageHeader
-          title="Order"
-          breadcrumbs={["Dashboard", "Order"]}
-          action={
-            <Button className="bg-red-500 hover:bg-red-600">
-              <Menu className="h-4 w-4" />
-            </Button>
-          }
-        />
+        <PageHeader title="Order" breadcrumbs={["Dashboard", "Order"]} />
         <div className="p-6">
           <Card>
             <CardContent className="p-6">
@@ -116,16 +106,16 @@ export default function OrdersPage() {
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer ID
+                      Customer Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Food ID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Food name
+                      Food Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Meal name
+                      Quantity
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total Price
@@ -134,7 +124,10 @@ export default function OrdersPage() {
                       Location
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
+                      Order Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Day
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -145,25 +138,25 @@ export default function OrdersPage() {
                   {orders?.map((order: any) => (
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order?.userId?._id.slice(-4)}
+                        {order?.userId?.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order?.foodId?._id.slice(-4)}
+                        {order?.items[0]?.foodId?._id.slice(-4)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Image
                             src={
-                              order?.foodId?.mainImage ||
+                              order?.items[0]?.foodId?.mainImage ||
                               "/placeholder.svg?height=40&width=40&query=food"
                             }
-                            alt={order?.foodId?.description}
+                            alt={order?.items[0]?.foodId?.description}
                             width={40}
                             height={40}
                             className="rounded object-cover mr-3"
                           />
                           <span className="text-sm text-gray-900">
-                            {order?.foodId?.description
+                            {order?.items[0]?.foodId?.description
                               .split(" ")
                               .slice(0, 2)
                               .join(" ")}
@@ -171,7 +164,7 @@ export default function OrdersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Meal-{order.quantity}
+                        {order?.items[0]?.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${order.totalPrice}
@@ -187,6 +180,9 @@ export default function OrdersPage() {
                           minute: "2-digit",
                         })}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.dayName}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={order.status}
@@ -199,7 +195,6 @@ export default function OrdersPage() {
                           disabled={updateStatusMutation.isPending}
                         >
                           <option value="pending">Pending</option>
-                          <option value="processing">Processing</option>
                           <option value="completed">Completed</option>
                           <option value="cancelled">Cancelled</option>
                         </select>
